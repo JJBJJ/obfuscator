@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04   # 20.04 自带 cmake-3.16 ninja
+    runs-on: ubuntu-latest   # 20.04 自带 cmake-3.16 ninja
     steps:
       - uses: actions/checkout@v3
         with:
