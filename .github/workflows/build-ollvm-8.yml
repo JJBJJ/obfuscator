@@ -2,39 +2,49 @@ name: Build-OLLVM-8
 
 on:
   push:
-    branches: [llvm-8.0]   # 你放源码的分支
-  workflow_dispatch:       # 手动触发也行
+    branches: [llvm-8.0]   # 你 fork 里放源码的分支
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest   # 20.04 自带 cmake-3.16 ninja
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: llvm-8.0     # 拉 heroims 的已补丁源码
+      # ① 用 v4 检出你 fork 的同名分支
+      - uses: actions/checkout@v4
 
-      - name: deps
+      # ② 把 clang 目录放进 llvm/tools/clang（heroims 仓库布局需要）
+      - name: Move clang into LLVM tree
+        run: |
+          mv clang tools/clang
+
+      # ③ 装依赖
+      - name: Install deps
         run: |
           sudo apt-get update
           sudo apt-get install -y cmake ninja-build build-essential
 
-      - name: configure & build
+      # ④ 配置 + 编译
+      - name: Configure & Build
         run: |
-          mkdir build && cd build
-          cmake -G Ninja .. \
+          cmake -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DLLVM_ENABLE_PROJECTS="clang;lld" \
             -DLLVM_TARGETS_TO_BUILD="ARM;AArch64;X86" \
-            -DCMAKE_INSTALL_PREFIX=./install
-          ninja -j$(nproc)
-          ninja install
+            -DCMAKE_INSTALL_PREFIX="$PWD/install"
+          cmake --build build --parallel "$(nproc)"
 
-      - name: pack
+      # ⑤ 安装
+      - name: Install
+        run: cmake --install build
+
+      # ⑥ 打包
+      - name: Pack
         run: |
-          cd build/install
-          tar -Jcf ../../ollvm-8.0-linux-x86_64.tar.xz *
+          cd install
+          tar -Jcf ../ollvm-8.0-linux-x86_64.tar.xz *
 
-      - name: upload to Release
+      # ⑦ 发布到 Release
+      - name: Upload Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v8.0-ci
