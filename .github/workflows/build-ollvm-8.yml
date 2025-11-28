@@ -29,6 +29,7 @@ jobs:
         run: |
           cmake -B build -G Ninja ^
             -DCMAKE_BUILD_TYPE=Release ^
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 ^
             -DLLVM_ENABLE_PROJECTS=clang;lld ^
             -DLLVM_TARGETS_TO_BUILD=ARM;AArch64;X86 ^
             -DCMAKE_INSTALL_PREFIX=%CD%\install
