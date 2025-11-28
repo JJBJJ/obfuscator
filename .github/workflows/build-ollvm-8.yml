@@ -7,31 +7,32 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
-      # ① 用 v4 检出你 fork 的同名分支
+      # ① 检出代码
       - uses: actions/checkout@v4
 
-      # ② 把 clang 目录放进 llvm/tools/clang（heroims 仓库布局需要）
-      - name: Move clang into LLVM tree
-        run: |
-          mv clang tools/clang
-
-      # ③ 装依赖
+      # ② 安装依赖
       - name: Install deps
         run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake ninja-build build-essential
+          choco install cmake ninja -y
+
+      # ③ 设置 MSVC 环境
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
 
       # ④ 配置 + 编译
       - name: Configure & Build
+        shell: cmd
         run: |
-          cmake -B build -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DLLVM_ENABLE_PROJECTS="clang;lld" \
-            -DLLVM_TARGETS_TO_BUILD="ARM;AArch64;X86" \
-            -DCMAKE_INSTALL_PREFIX="$PWD/install"
-          cmake --build build --parallel "$(nproc)"
+          cmake -B build -G Ninja ^
+            -DCMAKE_BUILD_TYPE=Release ^
+            -DLLVM_ENABLE_PROJECTS=clang;lld ^
+            -DLLVM_TARGETS_TO_BUILD=ARM;AArch64;X86 ^
+            -DCMAKE_INSTALL_PREFIX=%CD%\install
+          cmake --build build --parallel %NUMBER_OF_PROCESSORS%
 
       # ⑤ 安装
       - name: Install
@@ -39,14 +40,14 @@ jobs:
 
       # ⑥ 打包
       - name: Pack
+        shell: pwsh
         run: |
-          cd install
-          tar -Jcf ../ollvm-8.0-linux-x86_64.tar.xz *
+          Compress-Archive -Path install\* -DestinationPath ollvm-8.0-windows-x86_64.zip
 
       # ⑦ 发布到 Release
       - name: Upload Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v8.0-ci
-          files: ollvm-8.0-linux-x86_64.tar.xz
-          title: OLLVM-8.0 auto build
+          tag_name: v8.0-ci-windows
+          files: ollvm-8.0-windows-x86_64.zip
+          title: OLLVM-8.0 Windows Build
