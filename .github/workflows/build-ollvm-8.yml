@@ -17,35 +17,45 @@ jobs:
         run: |
           choco install cmake ninja -y
 
-      # ③ 设置 MSVC 环境
+      # ③ 缓存构建目录
+      - name: Cache LLVM build
+        uses: actions/cache@v3
+        with:
+          path: |
+            build
+            install
+          key: ${{ runner.os }}-llvm-8.0-${{ hashFiles('**/CMakeLists.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-llvm-8.0-
+
+      # ④ 设置 MSVC 环境
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x64
 
-      # ④ 配置 + 编译
+      # ⑤ 配置 + 编译
       - name: Configure & Build
         shell: cmd
         run: |
           cmake -B build -G Ninja ^
             -DCMAKE_BUILD_TYPE=Release ^
             -DCMAKE_POLICY_VERSION_MINIMUM=3.5 ^
-            -DLLVM_ENABLE_PROJECTS=clang;lld ^
             -DLLVM_TARGETS_TO_BUILD=ARM;AArch64;X86 ^
             -DCMAKE_INSTALL_PREFIX=%CD%\install
           cmake --build build --parallel %NUMBER_OF_PROCESSORS%
 
-      # ⑤ 安装
+      # ⑥ 安装
       - name: Install
         run: cmake --install build
 
-      # ⑥ 打包
+      # ⑦ 打包
       - name: Pack
         shell: pwsh
         run: |
           Compress-Archive -Path install\* -DestinationPath ollvm-8.0-windows-x86_64.zip
 
-      # ⑦ 发布到 Release
+      # ⑧ 发布到 Release
       - name: Upload Release
         uses: softprops/action-gh-release@v1
         with:
