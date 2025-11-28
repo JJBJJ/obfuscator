@@ -2,7 +2,7 @@ name: Build-OLLVM-8
 
 on:
   push:
-    branches: [llvm-9.0.1]   # 你 fork 里放源码的分支
+    branches: [llvm-9.0.1]   # 你 fork 里放源码的分
   workflow_dispatch:
 
 jobs:
