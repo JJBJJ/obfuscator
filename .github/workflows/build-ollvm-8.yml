@@ -36,6 +36,12 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
             -DLLVM_TARGETS_TO_BUILD="ARM;AArch64;X86" \
+            -DLLVM_BUILD_TOOLS=ON \
+            -DLLVM_BUILD_EXAMPLES=OFF \
+            -DLLVM_BUILD_TESTS=OFF \
+            -DLLVM_INCLUDE_TESTS=OFF \
+            -DLLVM_INCLUDE_EXAMPLES=OFF \
+            -DCMAKE_CXX_FLAGS="-Wno-error" \
             -DCMAKE_INSTALL_PREFIX="$PWD/install"
           cmake --build build --parallel $(nproc)
 
